@@ -1,0 +1,9 @@
+# Ensure text files use LF in repo; Git converts on checkout if configured
+* text=auto eol=lf
+
+# Binary (no conversion)
+*.png binary
+*.jpg binary
+*.gif binary
+*.wav binary
+*.ico binary
