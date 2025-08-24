@@ -1,9 +1,1 @@
-# Enforce LF line endings in repo (Git will convert CRLF->LF on add/commit)
-* text=auto eol=lf
-
-# Binary (no conversion)
-*.png binary
-*.jpg binary
-*.gif binary
-*.wav binary
-*.ico binary
+* text=auto
