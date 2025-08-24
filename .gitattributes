@@ -1,4 +1,4 @@
-# Ensure text files use LF in repo; Git converts on checkout if configured
+# Enforce LF line endings in repo (Git will convert CRLF->LF on add/commit)
 * text=auto eol=lf
 
 # Binary (no conversion)

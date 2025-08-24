@@ -152,6 +152,18 @@ They are also listed in .gitignore to avoid re-adding.
 ### Line Ending Warnings (Windows)
 If you saw many warnings like "LF will be replaced by CRLF": they appeared because node_modules was tracked. After adding .gitignore and removing node_modules from Git (git rm -r --cached node_modules) the warnings stop. A .gitattributes file (text=auto eol=lf) keeps consistent LF endings in the repo.
 
+### Line Ending Normalization (LF)
+If you see warnings "CRLF will be replaced by LF":
+```
+git add --renormalize .
+git commit -m "chore: normalize line endings"
+```
+If node_modules was previously tracked:
+```
+git rm -r --cached node_modules
+git commit -m "chore: remove tracked node_modules"
+```
+
 ### Later updates
 
 ```bash
