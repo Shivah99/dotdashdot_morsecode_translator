@@ -296,6 +296,7 @@ input[type=range]::-moz-range-thumb {
   border:1px solid #2d3642;
   border-radius:12px;
   z-index:1000;
+  -webkit-backdrop-filter:blur(4px); /* Safari support */
   backdrop-filter:blur(4px);
 }
 .font-rail button {
@@ -340,5 +341,14 @@ input[type=range]::-moz-range-thumb {
   clip:rect(0 0 0 0);
   border:0;
 }
+
+/* Inline-style replacements (add these instead of using style="...") */
+.accent-text { color: var(--accent); }
+.muted-text { opacity:.7; }
+.mt-sm { margin-top:.5rem; }
+.mb-sm { margin-bottom:.5rem; }
+
+/* Optional header title offset if the fixed rail overlaps */
+.header-title-offset { margin-top:2.75rem; }
 
 /* Font size vertical rail could be further themed if desired */
