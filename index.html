@@ -15,6 +15,23 @@
         JavaScript required – enable it to use the app.
       </noscript>
     </div>
+
+    <textarea id="english-input" placeholder="Enter English..."></textarea>
+    <textarea id="morse-output" placeholder="Morse output" readonly></textarea>
+    <span id="status-english" class="hint small" hidden></span>
+
+    <hr />
+
+    <textarea id="morse-input" placeholder="Enter Morse (.- /)"></textarea>
+    <textarea id="english-output" placeholder="English output" readonly></textarea>
+    <span id="status-morse" class="hint small" hidden></span>
+
+    <div class="actions">
+      <button id="btn-to-morse" type="button">English → Morse</button>
+      <button id="btn-to-english" type="button">Morse → English</button>
+    </div>
+
     <script type="module" src="/src/main.jsx"></script>
+    <script type="module" src="src/utils/converter.js"></script>
   </body>
 </html>

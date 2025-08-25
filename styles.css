@@ -352,3 +352,24 @@ input[type=range]::-moz-range-thumb {
 .header-title-offset { margin-top:2.75rem; }
 
 /* Font size vertical rail could be further themed if desired */
+
+/* Accent link styling */
+a {
+  color: var(--accent);
+  text-decoration: none;
+}
+a:hover,
+a:focus-visible {
+  text-decoration: underline;
+}
+
+/* Optional automatic offset if you add class="adjust-for-rail" to <body> */
+body.adjust-for-rail header {
+  margin-top:52px; /* matches font-rail height + spacing */
+}
+
+/* Subtle error highlight */
+.conversion-error {
+  outline:1px solid var(--danger);
+  box-shadow:0 0 4px rgba(255,85,85,.6);
+}
