@@ -6,7 +6,7 @@ import History from './components/History.jsx';
 import Lessons from './components/Lessons.jsx';
 import Tips from './components/Tips.jsx';
 import { useHistoryStore } from './hooks/useHistory.js';
-import { isMorse, englishToMorse, morseToEnglish } from './utils/morse.js';
+import { englishToMorse, morseToEnglish, detectDirection, translateAuto } from './utils/morse.js';
 import { playMorse } from './utils/audio.js';
 
 export default function App(){
@@ -14,10 +14,13 @@ export default function App(){
   const [wpm, setWpm] = useState(15);
   const [freq, setFreq] = useState(600);
   const history = useHistoryStore();
-  const output = useMemo(()=> !input.trim() ? '' : (isMorse(input)? morseToEnglish(input): englishToMorse(input)), [input]);
-  function swap(){ setInput(output); }
+  const translation = useMemo(()=> translateAuto(input), [input]);
+  const output = translation.direction === 'morse'
+    ? translation.english
+    : translation.morse;
+
   function save(){ if(!input.trim()||!output.trim()) return; history.add({ input, output }); }
-  function play(){ const morse = isMorse(input)? input: englishToMorse(input); playMorse(morse,{ wpm,freq }); }
+  function play(){ playMorse(translation.morse, { wpm, freq }); }
 
   useEffect(()=>{ console.info('[DDD] App mounted', { initialInput: input, wpm, freq }); },[]);
 
@@ -37,7 +40,7 @@ export default function App(){
         <div>
           <Translator
             input={input} setInput={setInput} output={output}
-            onSwap={swap} onClear={()=>setInput('')} onSave={save} onPlay={play}
+            onClear={()=>setInput('')} onSave={save} onPlay={play}
             wpm={wpm} setWpm={setWpm} freq={freq} setFreq={setFreq}
           />
           <Keyer onCommit={(m)=> setInput(i=> (i? i+' '+m : m))} />
@@ -49,7 +52,7 @@ export default function App(){
         </div>
       </div>
       <footer className="footer-fun">
-        🚀 <span className="em">DotDashDot</span> • Open Source MIT • Made with ⚡ for learners & kids
+        🚀 <span className="em">DotDashDot</span> • MIT Licensed • Made with ⚡ for learners & kids
       </footer>
     </div>
   );

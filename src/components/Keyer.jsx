@@ -17,7 +17,12 @@ export default function Keyer({ onCommit }){
   }
   function flashLed(){ setLed(true); setTimeout(()=> setLed(false),140); }
   function add(sym){ setBuffer(b=> b + sym); flashLed(); }
-  function commit(){ if(!buffer.trim()) return; onCommit(buffer.trim()); setBuffer(''); }
+  function commit(){
+    if(!buffer.trim()) return;
+    // Ensure single space separation between letters added
+    onCommit(buffer.trim());
+    setBuffer('');
+  }
   return (
     <div className="keyer-panel">
       {/* ...existing JSX... */}

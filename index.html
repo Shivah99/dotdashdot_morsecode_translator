@@ -4,34 +4,29 @@
     <meta charset="UTF-8" />
     <title>DotDashDot – Morse Code Translator</title>
     <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <meta name="description" content="DotDashDot – Fast, friendly Morse code translator & keyer. Type, listen, learn, save. Retro audio styles and adjustable WPM / tone." />
+    <link rel="canonical" href="https://YOUR_USERNAME.github.io/dotdashdot_morsecode_translator/" />
+    <meta property="og:title" content="DotDashDot – Morse Code Translator" />
+    <meta property="og:description" content="Type English ↔ Morse, play audio with custom tones & key sounds, and learn interactively." />
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://YOUR_USERNAME.github.io/dotdashdot_morsecode_translator/" />
+    <meta property="og:image" content="https://YOUR_USERNAME.github.io/dotdashdot_morsecode_translator/og-cover.png" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="DotDashDot – Morse Code Translator" />
+    <meta name="twitter:description" content="Play, translate & learn Morse with playful retro key sounds." />
+    <meta name="twitter:image" content="https://YOUR_USERNAME.github.io/dotdashdot_morsecode_translator/og-cover.png" />
     <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg'><text y='.9em' font-size='90'>.-.</text></svg>">
   </head>
   <body>
     <div id="root">
       <div id="boot-status" class="boot-status">
-        Loading DotDashDot... (If this stays, open DevTools Console)
+        Loading DotDashDot...
       </div>
       <noscript class="noscript">
         JavaScript required – enable it to use the app.
       </noscript>
     </div>
-
-    <textarea id="english-input" placeholder="Enter English..."></textarea>
-    <textarea id="morse-output" placeholder="Morse output" readonly></textarea>
-    <span id="status-english" class="hint small" hidden></span>
-
-    <hr />
-
-    <textarea id="morse-input" placeholder="Enter Morse (.- /)"></textarea>
-    <textarea id="english-output" placeholder="English output" readonly></textarea>
-    <span id="status-morse" class="hint small" hidden></span>
-
-    <div class="actions">
-      <button id="btn-to-morse" type="button">English → Morse</button>
-      <button id="btn-to-english" type="button">Morse → English</button>
-    </div>
-
+    <!-- Removed legacy plain textareas & converter.js to avoid duplicate logic -->
     <script type="module" src="/src/main.jsx"></script>
-    <script type="module" src="src/utils/converter.js"></script>
   </body>
 </html>

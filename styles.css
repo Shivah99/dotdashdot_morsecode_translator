@@ -126,6 +126,14 @@ body.large-font { font-size:18px; }
 .output-morse .morse-word { padding:2px 4px; border-radius:6px; background:rgba(255,216,59,0.06); }
 .output-english .english-word { padding:2px 6px; border-radius:6px; background:rgba(158,228,147,0.08); }
 .output-morse .morse-letter { display:inline-block; padding:0 .08em; }
+.output-morse .morse-sep {
+  display:inline-block;
+  margin:0 .55em .35em .55em;
+  color:#ff79c6;
+  font-weight:700;
+  text-shadow:0 0 6px #ff79c6;
+  letter-spacing:0;
+}
 
 /* Toolbar */
 .translate-toolbar {

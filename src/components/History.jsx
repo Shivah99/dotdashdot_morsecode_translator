@@ -1,6 +1,6 @@
 import React from 'react';
 import { playMorse } from '../utils/audio.js';
-import { englishToMorse, isMorse } from '../utils/morse.js';
+import { englishToMorse, isMorse, detectDirection, translateAuto } from '../utils/morse.js';
 export default function History({ history, onExport, onClear }){
   function downloadRec(rec){
     const blob = new Blob([`ID: ${rec.id}\nTime: ${new Date(rec.ts).toISOString()}\n\nEnglish:\n${rec.output}\n\nMorse:\n${isMorse(rec.input)? rec.input: englishToMorse(rec.input)}\n`], {type:'text/plain'});
@@ -11,7 +11,8 @@ export default function History({ history, onExport, onClear }){
       {/* ...existing JSX... */}
       <h3 style={{ margin: '0 0 10px', fontSize: '0.9rem' }}>History (last 10)</h3>
       {history.slice().reverse().map(rec=>{
-        const morse = isMorse(rec.input)? rec.input : englishToMorse(rec.input);
+        const t = translateAuto(rec.input);
+        const morse = t.morse || (isMorse(rec.input)? rec.input : englishToMorse(rec.input));
         return (
           <details key={rec.id}>
             <summary>
@@ -19,7 +20,7 @@ export default function History({ history, onExport, onClear }){
               <span style={{ marginLeft: 8, fontSize: '.6rem', opacity: .65 }}>{new Date(rec.ts).toLocaleTimeString()}</span>
             </summary>
             <div className="history-item-body">
-              <div style={{ color: '#9ee493', fontWeight: 600, fontSize: '.8rem' }}>EN: {rec.output}</div>
+              <div style={{ color: '#9ee493', fontWeight: 600, fontSize: '.8rem' }}>EN: {t.direction==='morse'? t.english : rec.output}</div>
               <div style={{ color: '#ffd83b', fontWeight: 600, fontSize: '.75rem', marginTop: 4 }}>MO: {morse}</div>
               <div className="history-mini-buttons">
                 <button onClick={()=> playMorse(morse)}>▶ play</button>

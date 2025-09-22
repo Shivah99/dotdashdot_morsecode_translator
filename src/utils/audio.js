@@ -12,6 +12,9 @@ const STYLE_STORAGE_KEY = 'ddd_key_sound_style_v1';
 const USER_SET_FLAG = 'ddd_key_sound_user_set';
 const MORSE_TONE_KEY = 'ddd_morse_tone_style_v1';
 let morseToneStyle = 'sine';
+const HAPTICS_KEY = 'ddd_haptics_on_v1';
+let hapticsOn = false;
+try { hapticsOn = localStorage.getItem(HAPTICS_KEY)==='1'; } catch {}
 
 // Voice gain pool (reuse to reduce GC)
 const VOICE_POOL_SIZE = 5;
@@ -87,6 +90,13 @@ export function setMorseToneStyle(id){
 }
 
 export function getMorseToneStyle(){ return morseToneStyle; }
+
+export function setHaptics(on){
+  hapticsOn = !!on;
+  try { localStorage.setItem(HAPTICS_KEY, hapticsOn?'1':'0'); } catch {}
+}
+
+export function getHaptics(){ return hapticsOn; }
 
 function ensureCtx(){
   try {
@@ -299,10 +309,13 @@ function ensureSparkleNoise(){
 }
 
 // === Multi-style key sounds with pooling & ducking ===
+function vib(){ if(hapticsOn && 'vibrate' in navigator){ navigator.vibrate(10); } }
+
 export function playKeyClick(){
   if(keySoundStyle === 'mute') return;
   ensureCtx();
   resumeIfNeeded();
+  vib();
 
   // Track rapid repeats (held key) to soften volume if user is hammering keys.
   const now = performance.now();

@@ -1,5 +1,6 @@
 // Renamed from Controls.js (content unchanged)
 import React, { useState, useEffect } from 'react';
+import { getHaptics, setHaptics } from '../utils/audio.js';
 
 const H_BG_KEY='ddd_hue_bg', H_TX_KEY='ddd_hue_text', FS_KEY='ddd_font_scale';
 const FONT_STEPS=[100,115,130,150];
@@ -12,6 +13,7 @@ export default function Controls(){
     const idx=FONT_STEPS.indexOf(stored);
     return idx>=0?idx:0;
   });
+  const [haptics,setHapticsState] = useState(()=> getHaptics());
 
   useEffect(()=>{ applyHues(bgHue,txHue); localStorage.setItem(H_BG_KEY,String(bgHue)); },[bgHue]);
   useEffect(()=>{ applyHues(bgHue,txHue); localStorage.setItem(H_TX_KEY,String(txHue)); },[txHue]);
@@ -38,6 +40,10 @@ export default function Controls(){
     else if(e.key==='ArrowLeft'||e.key==='ArrowDown'){ e.preventDefault(); setFsIndex(i=> Math.max(0,i-1)); }
   }
 
+  function toggleHaptics(){
+    setHapticsState(h=> { const nv=!h; setHaptics(nv); return nv; });
+  }
+
   return (
     <div style={{display:'flex',flexWrap:'wrap',gap:10,alignItems:'flex-start'}}>
       <label style={{display:'flex',flexDirection:'column',fontSize:10,alignItems:'center',color:'var(--accent)'}}>
@@ -53,6 +59,9 @@ export default function Controls(){
           style={{width:90,background:'linear-gradient(90deg, red, yellow, lime, cyan, blue, magenta, red)',border:`1px solid hsl(${txHue} 90% 55%)`,height:'6px',borderRadius:'4px'}} />
       </label>
       <button onClick={()=> { setBgHue(210); setTxHue(50); }} title="Reset colors" aria-label="Reset colors">↺</button>
+      <label style={{display:'flex',alignItems:'center',gap:4,fontSize:10,color:'var(--accent)'}} title="Mobile vibration on key clicks">
+        <input type="checkbox" checked={haptics} onChange={toggleHaptics} style={{accentColor:'var(--accent)'}} /> Haptics
+      </label>
       <div className="font-rail" role="radiogroup" aria-label="Font size" aria-orientation="horizontal">
         {FONT_STEPS.map((pct,i)=>(
           <button key={pct} role="radio" aria-checked={fsIndex===i}
