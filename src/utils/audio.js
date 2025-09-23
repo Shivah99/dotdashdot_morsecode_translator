@@ -311,19 +311,18 @@ function ensureSparkleNoise(){
 // === Multi-style key sounds with pooling & ducking ===
 function vib(){ if(hapticsOn && 'vibrate' in navigator){ navigator.vibrate(10); } }
 
-export function playKeyClick(){
-  if(keySoundStyle === 'mute') return;
+function playClickWithStyle(styleOverride){
+  if(styleOverride === 'mute') return;
   ensureCtx();
   resumeIfNeeded();
   vib();
 
-  // Track rapid repeats (held key) to soften volume if user is hammering keys.
+  // soften if user is rapidly repeating
   const now = performance.now();
   recentClickTimes = recentClickTimes.filter(t=> now - t < 150);
   recentClickTimes.push(now);
   let spamFactor = 1;
   if(recentClickTimes.length > 3){
-    // reduce amplitude progressively
     spamFactor = Math.max(0.25, 1 - (recentClickTimes.length - 3)*0.15);
   }
 
@@ -331,29 +330,15 @@ export function playKeyClick(){
   keyClicks = keyClicks.filter(k=> k.t > ctx.currentTime - 0.35);
   if(keyClicks.length > 6) return;
 
-  const startTime = ctx.currentTime; // renamed from t0 for readability
+  const startTime = ctx.currentTime;
   const targetGain = 1 * clickDuck * spamFactor;
 
-  function env(g, peaks=[0.4], times=[0.012]){
-    // Utility: simple soft pop style env
-    g.gain.setValueAtTime(0.0001,startTime);
-    g.gain.exponentialRampToValueAtTime(peaks[0]*targetGain, startTime+times[0]);
-  }
+  if(styleOverride === 'sparkle') ensureSparkleNoise();
 
-  function scheduleRelease(g, decayEnd){
-    g.gain.exponentialRampToValueAtTime(0.0001, decayEnd);
-  }
-
-  const style = keySoundStyle;
-
-  if(style === 'sparkle') ensureSparkleNoise();
-
-  // Acquire a reusable pooled gain node for this click voice
+  // One pooled gain per voice
   const g = getVoiceGain();
   try { g.gain.cancelScheduledValues(startTime); } catch{}
   g.gain.setValueAtTime(0.0001, startTime);
-
-  const voices = []; // keep references to stop automatically via natural end
 
   function addOsc({ type='sine', freq, detune=0, dur=0.15, attack=0.005, peak=0.4, decay=0.12 }){
     const o = ctx.createOscillator();
@@ -364,12 +349,10 @@ export function playKeyClick(){
     og.gain.setValueAtTime(0.0001, startTime);
     og.connect(g);
     o.connect(og);
-    // envelope
     og.gain.exponentialRampToValueAtTime(peak*targetGain, startTime+attack);
     og.gain.exponentialRampToValueAtTime(0.0001, startTime+decay);
     o.start(startTime);
     o.stop(startTime+dur);
-    voices.push(o);
   }
 
   function addNoise({ type='bandpass', freq=3000, q=4, dur=0.08, peak=0.35, attack=0.004, decay=0.06, buffer }){
@@ -399,10 +382,9 @@ export function playKeyClick(){
     ng.gain.exponentialRampToValueAtTime(0.0001, startTime+decay);
     src.start(startTime);
     src.stop(startTime+dur);
-    voices.push(src);
   }
 
-  switch(style){
+  switch(styleOverride){
     case 'soft': {
       const base = 480 + Math.random()*140;
       addOsc({ type:'sine', freq:base, dur:0.16, attack:0.012, peak:0.35, decay:0.14 });
@@ -422,7 +404,7 @@ export function playKeyClick(){
       break;
     }
     case 'wood': {
-      const baseFreq = 260 + Math.random()*15; // renamed from f
+      const baseFreq = 260 + Math.random()*15;
       addOsc({ type:'sine', freq:baseFreq, dur:0.16, attack:0.008, peak:0.5, decay:0.14 });
       addOsc({ type:'sine', freq:baseFreq*1.5, dur:0.12, attack:0.006, peak:0.3, decay:0.10 });
       break;
@@ -439,21 +421,17 @@ export function playKeyClick(){
       break;
     }
     case 'sparkle': {
-      // reuse noise buffer & add sine ping
+      ensureSparkleNoise();
       addNoise({ type:'highpass', freq:1500, q:0.7, dur:0.18, peak:0.38, attack:0.01, decay:0.22, buffer: sparkleNoiseBuffer });
       addOsc({ type:'sine', freq:1400 + Math.random()*200, dur:0.24, attack:0.01, peak:0.25, decay:0.22 });
       break;
     }
     case 'mech': {
-      // Mechanical: tick + thock + subtle mid
-      // Tick (bandpass noise 3–4 kHz)
       addNoise({ type:'bandpass', freq: 3200 + Math.random()*500, q:6, dur:0.045, peak:0.35, attack:0.003, decay:0.04 });
-      // Thock body (low)
       const base = 150 + Math.random()*80;
-      const detuneCents = (Math.random()*40 - 20); // ±20 cents
+      const detuneCents = (Math.random()*40 - 20);
       const driftHz = base * Math.pow(2, detuneCents/1200);
       addOsc({ type:'sine', freq: driftHz, dur:0.18+Math.random()*0.02, attack:0.005, peak:0.48, decay:0.16 });
-      // Mid faint component
       addOsc({ type:'triangle', freq: base*4.2, dur:0.14, attack:0.004, peak:0.12, decay:0.11 });
       break;
     }
@@ -462,13 +440,21 @@ export function playKeyClick(){
       break;
   }
 
-  // Shared shaping (fast pop up then decay). startTime used instead of t0.
+  // master envelope shaping
   const decayEnd = startTime + 0.25;
   g.gain.setValueAtTime(0.0001, startTime);
   g.gain.exponentialRampToValueAtTime(0.9*targetGain, startTime+0.002);
   g.gain.exponentialRampToValueAtTime(0.0001, decayEnd);
 
   keyClicks.push({ t: ctx.currentTime });
+}
+
+export function playKeyClick(){
+  return playClickWithStyle(keySoundStyle);
+}
+
+export function previewKeyClick(id){
+  return playClickWithStyle(id);
 }
 
 // Optional API exposure for haptics toggle (kept small)

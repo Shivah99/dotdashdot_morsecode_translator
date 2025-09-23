@@ -1,6 +1,8 @@
 import React from 'react';
 import { createRoot } from 'react-dom/client';
-import '../styles.css'; 
+import './styles/base.css';
+import './styles/translator.css';
+import './styles/controls.css';
 import App from './App.jsx';
 
 if (!import.meta?.hot && location.protocol === 'file:') {

@@ -1,0 +1,37 @@
+/* Input/Output two-box layout */
+.input-section .input-container textarea,
+.output-section .output-container textarea{resize:none;overflow-y:hidden;transition:height .08s ease;min-height:140px}
+.input-section label,.output-section label{display:block;margin:8px 0 6px;opacity:.85}
+.output-section{margin-top:16px}
+.copy-btn{background:#1f2732;border:1px solid #2a3747;color:#d7e6f7;border-radius:8px;cursor:pointer}
+.copy-btn:hover{background:#253141}
+
+/* Controls (toolbar) */
+.controls{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin:10px 0}
+.controls button{padding:6px 10px}
+.controls select{height:24px}
+
+/* History/Tips/Lessons */
+.history-shell{background:#161c25;border:1px solid #2b3542;border-radius:16px}
+.lessons-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(70px,1fr));gap:6px;margin-top:10px}
+.lesson-card{background:#1b232c;border:1px solid #2e3a48;border-radius:10px;padding:6px 4px 8px;text-align:center;font-size:.7rem;cursor:pointer;transition:.15s;position:relative}
+.lesson-card:hover{background:#232e3a;border-color:#3d4b5b;box-shadow:0 0 6px rgba(255,216,59,.25)}
+.lesson-card strong{display:block;font-size:.8rem;color:#9ee493}
+.lesson-card code{color:#ffd83b;font-weight:600}
+
+/* Footer */
+.footer-fun{margin:36px 0 18px;opacity:.85;text-align:center;color:var(--text)}
+.footer-fun .em{color:var(--accent)}
+
+/* --- Optional Ad Slots (toggle with localStorage ddd_ads=1) --- */
+.ad-bar{display:grid;grid-template-columns:1fr auto 1fr;gap:12px;margin:8px 0}
+.ad-slot{background:#121821;border:1px dashed #2b3542;border-radius:10px}
+.ad-left,.ad-right{min-height:600px}
+.ad-bottom{position:fixed;left:16px;right:16px;bottom:16px;min-height:90px;z-index:10}
+@media (max-width: 1024px){
+	.ad-left,.ad-right{display:none}
+	.ad-bottom{min-height:60px;left:8px;right:8px;bottom:8px}
+}
+@media (min-width: 1440px){
+	.ad-left,.ad-right{min-width:300px}
+}

@@ -1,0 +1,15 @@
+/* Hue chip + popover */
+.hue-chip{display:flex;align-items:center;gap:8px;background:#141c24;border:1px solid #273447;color:var(--text);border-radius:999px;padding:6px 10px;cursor:pointer}
+.hue-chip:hover{background:#182231}
+.hue-chip .swatch{width:18px;height:18px;border-radius:50%;position:relative;display:inline-block;background:conic-gradient(from 0deg, hsl(var(--bg-hue) 45% 70%) 0 75%, hsl(var(--bg-hue) 45% 70%) 75%)}
+.hue-chip .swatch::before{content:"";position:absolute;inset:4px;border-radius:50%;background:hsl(var(--tx-hue) 65% 65%)}
+
+/* Font size rail */
+.font-rail{position:fixed;top:6px;right:8px;display:flex;flex-direction:row;align-items:flex-end;gap:4px;padding:4px 8px 6px;background:rgba(0,0,0,.45);border:1px solid #2d3642;border-radius:12px;z-index:1000;-webkit-backdrop-filter:blur(4px);backdrop-filter:blur(4px)}
+.font-rail button{background:transparent;color:var(--accent);border:1px solid #3a4552;border-radius:6px;min-width:38px;height:42px;display:flex;align-items:center;justify-content:center;font-weight:700;cursor:pointer;transition:background .15s,border-color .15s,box-shadow .15s,transform .15s}
+.font-rail button[data-active="1"]{border-color:var(--accent);box-shadow:0 0 0 2px rgba(255,216,59,.35),0 0 8px var(--accent-glow);background:rgba(255,216,59,0.07)}
+.font-rail button:focus-visible{outline:none;border-color:var(--accent-glow);box-shadow:0 0 0 3px rgba(255,216,59,.55)}
+.font-rail button:hover{background:rgba(255,216,59,0.1)}
+.font-rail button:active{transform:scale(.95)}
+
+@media(max-width:500px){.hue-popover{left:auto;right:0}}

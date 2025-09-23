@@ -1,135 +1,161 @@
-import React, { useMemo, useState, useEffect } from 'react';
-import { englishToMorse, morseToEnglish, detectDirection, analyzeInput, decodeContinuousMorse } from '../utils/morse.js';
-import { stopMorse, playKeyClick, isPlaying,
-  KEY_SOUNDS, setKeySoundStyle, getCurrentKeySound,
-  MORSE_TONES, setMorseToneStyle, getMorseToneStyle } from '../utils/audio.js';
+import React, { useEffect, useState, useRef } from 'react';
+import { englishToMorse, morseToEnglish, detectDirection } from '../utils/morse.js';
+import { KEY_SOUNDS, setKeySoundStyle, getCurrentKeySound, MORSE_TONES, setMorseToneStyle, getMorseToneStyle, playKeyClick, previewKeyClick } from '../utils/audio.js';
 
 export default function Translator(props){
-  const { input,setInput,output, onClear,onSave,onPlay,wpm,setWpm,freq,setFreq } = props;
-  const [keySound, setKeySound] = useState('soft');
-  const [tone, setTone] = useState(()=> getMorseToneStyle());
-  useEffect(()=>{ setKeySound(getCurrentKeySound?.()||'soft'); setTone(getMorseToneStyle()); }, []);
-  const analysis = useMemo(()=> analyzeInput(input), [input]);
+  const { input, setInput, output, onClear, onSave, wpm, setWpm, freq, setFreq } = props;
 
-  const { englishWords, morseWords, continuousDecoded } = useMemo(()=>{
-    if(!input.trim()) return { englishWords:[], morseWords:[], continuousDecoded:'' };
-    if(analysis.direction==='morse'){
-      if(analysis.continuous){
-        const decoded = decodeContinuousMorse(analysis.sanitized);
-        return { englishWords: decoded ? decoded.split(/\s+/) : [], morseWords:[analysis.sanitized], continuousDecoded: decoded };
-      }
-      const eng = morseToEnglish(analysis.sanitized);
-      const mw = analysis.sanitized.split(' / ').map(w=> w.trim()).filter(Boolean);
-      return { englishWords: eng.split(/\s+/).filter(Boolean), morseWords: mw, continuousDecoded:'' };
-    }
-    const morseTranslation = englishToMorse(input);
-    return {
-      englishWords: input.trim().split(/\s+/),
-      morseWords: morseTranslation.split(' / '),
-      continuousDecoded:''
-    };
-  }, [input, analysis]);
+  const inRef = useRef(null);
+  const outRef = useRef(null);
 
-  function downloadCurrent(){
-    const blob=new Blob([output],{type:'text/plain'});
-    const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='translation.txt'; a.click();
+  // which box is the current source editor
+  const [editSide, setEditSide] = useState('input'); // 'input' | 'output'
+  const [outputDraft, setOutputDraft] = useState('');
+
+  function autoSize(el){
+    if(!el) return;
+    const prev = el.style.width;
+    el.style.width = el.offsetWidth + 'px';
+    el.style.height = 'auto';
+    const max = Math.round(window.innerHeight * 0.7); // cap at 70vh
+    const next = Math.min(el.scrollHeight, max);
+    el.style.height = Math.max(next, 120) + 'px';
+    el.style.overflowY = el.scrollHeight > next ? 'auto' : 'hidden';
+    el.style.width = prev || '';
   }
+
+  useEffect(()=>{ autoSize(inRef.current); }, []);
+  useEffect(()=>{ autoSize(inRef.current); }, [input]);
+  useEffect(()=>{ if(editSide!=='output'){ autoSize(outRef.current); } }, [output, editSide]);
+  useEffect(()=>{ if(editSide==='output'){ autoSize(outRef.current); } }, [outputDraft, editSide]);
+
+  // keep outputDraft in sync when switching to output edit mode
+  useEffect(()=>{
+    if(editSide==='output') setOutputDraft(output || '');
+  }, [editSide]);
+
+  function copy(text){
+    if(!text) return;
+    try { navigator.clipboard?.writeText(text); } catch {}
+  }
+
+  function swap(){
+    if(editSide==='input'){
+      if(!output) return; setInput(output);
+    } else {
+      // when editing output, make the output the new source by inversing
+      const txt = (outputDraft || '').trim();
+      if(!txt) return;
+      const dir = detectDirection(txt);
+      if(dir === 'morse') setInput(morseToEnglish(txt)); else setInput(englishToMorse(txt));
+      setEditSide('input');
+    }
+  }
+
+  const [keySound, setKeySound] = useState('soft');
+  const [tone, setTone] = useState('sine');
+  useEffect(()=>{
+    try {
+      setKeySound(getCurrentKeySound?.() || 'soft');
+      setTone(getMorseToneStyle?.() || 'sine');
+    } catch {}
+  },[]);
+
+  // removed downloadCurrent per request
+
   return (
-    <section style={{background:'var(--panel,#121821)',border:'1px solid #273447',borderRadius:16,padding:'18px 20px'}}>
-      <header style={{marginBottom:4}}>
-        <h2 style={{margin:'0 0 4px', fontSize:'1.05rem'}}>Translator</h2>
-        <div style={{fontSize:'.65rem', opacity:.7}}>
-          Auto Detect: {analysis.direction==='morse'?'Morse → English':'English → Morse'}
-          {analysis.direction==='morse' && analysis.changed &&
-            <span style={{marginLeft:8, color:'var(--accent)'}}>Sanitized</span>}
-          {analysis.direction==='morse' && analysis.continuous &&
-            <span style={{marginLeft:8, color:'var(--accent)'}}>continuous (auto-segment)</span>}
+    <main className="translator-app" style={{maxWidth:900, margin:'16px auto', padding:'0 12px'}}>
+      {/* INPUT BOX */}
+      <section className="input-section">
+        <label htmlFor="input-text">Input (English or Morse)</label>
+        <div className="input-container" style={{position:'relative'}}>
+          <textarea
+            id="input-text"
+            ref={inRef}
+            placeholder="Type Morse or English here..."
+            value={input}
+            onFocus={()=> setEditSide('input')}
+            onChange={e=> { if(editSide!=='input'){ return; } setInput(e.target.value); autoSize(e.target); }}
+            onKeyDown={e=>{
+              const k=e.key;
+              if(k.length===1 || k==='Backspace' || k==='Enter' || k===' '){ playKeyClick(); }
+            }}
+            spellCheck={false}
+            wrap="soft"
+            aria-label="Input (English or Morse)"
+            readOnly={editSide!=='input'}
+          />
+          <button type="button" className="copy-btn" aria-label="Copy input"
+            onClick={()=> copy(input)} title="Copy input"
+            style={{position:'absolute', right:8, bottom:8, padding:'4px 8px'}}>🪄</button>
         </div>
-      </header>
-      {/* INPUT (editable) */}
-      <textarea
-        value={input}
-        onChange={e=>setInput(e.target.value)}
-        onKeyDown={e=>{
-          if(keySound !== 'mute' && (e.key.length===1 || ['Backspace','Enter',' '].includes(e.key))){
-            playKeyClick();
-          }
-        }}
-        placeholder="Type English or Morse (.-)..." />
-      {/* CONVERTED OUTPUT (read-only plain text) */}
-      <div style={{marginTop:10}}>
-        <label style={{display:'block', fontSize:12, opacity:.85, marginBottom:4}}>
-          {analysis.direction==='morse' ? 'Converted English' : 'Converted Morse'}
-        </label>
-        <textarea
-          value={output || ''}
-          readOnly
-          spellCheck={false}
-          aria-label={analysis.direction==='morse' ? 'Converted English' : 'Converted Morse'}
-          onFocus={e=> e.target.select()}
-          style={{width:'100%', minHeight:70, background:'#0f141c', color:'var(--text)', border:'1px solid #2a3747', borderRadius:10, padding:'10px 12px', fontFamily:'ui-monospace, SFMono-Regular, Menlo, Consolas, monospace'}}
-          placeholder={analysis.direction==='morse' ? 'English result will appear here' : 'Morse result will appear here'}
-        />
-        <div style={{display:'flex', gap:8, marginTop:6}}>
-          <button type="button" onClick={()=> { if(navigator.clipboard){ navigator.clipboard.writeText(output||''); } }} title="Copy converted text">Copy</button>
+      </section>
+
+      {/* OUTPUT BOX */}
+      <section className="output-section" style={{marginTop:14}}>
+        <label htmlFor="output-text">Output (Auto Converted)</label>
+        <div className="output-container" style={{position:'relative'}}>
+          <textarea
+            id="output-text"
+            ref={outRef}
+            readOnly={editSide!=='output' ? true : false}
+            value={editSide==='output' ? (outputDraft ?? '') : (output ?? '')}
+            onFocus={()=> { setEditSide('output'); setOutputDraft(output || ''); }}
+            onChange={e=> {
+              if(editSide!=='output') return;
+              const txt = e.target.value;
+              setOutputDraft(txt);
+              // inverse convert to derive source input
+              const dir = detectDirection(txt);
+              const nextInput = dir==='morse' ? morseToEnglish(txt) : englishToMorse(txt);
+              setInput(nextInput);
+              autoSize(e.target);
+            }}
+            onKeyDown={e=>{
+              const k=e.key;
+              if(k.length===1 || k==='Backspace' || k==='Enter' || k===' '){ playKeyClick(); }
+            }}
+            spellCheck={false}
+            wrap="soft"
+            aria-label="Output (Auto Converted)"
+          />
+          <button type="button" className="copy-btn" aria-label="Copy output"
+            onClick={()=> copy((editSide==='output' ? outputDraft : output) || '')} title="Copy output"
+            style={{position:'absolute', right:8, bottom:8, padding:'4px 8px'}}>🪄</button>
         </div>
-      </div>
-      <div className="translate-toolbar">
-        {/* buttons & controls */}
-        <button onClick={onClear}>🧹 Clear</button>
-        <button onClick={onSave}>💾 Save</button>
-        <button onClick={downloadCurrent}>⬇️ Download</button>
-        <button onClick={onPlay} title="First tap enables audio on iOS.">▶ Play</button>
-        <button onClick={stopMorse}>⏹ Stop</button>
-        <label style={{display:'flex',alignItems:'center',gap:4,fontSize:11}}>
-          Key:
-          <select value={keySound} onChange={e=>{ const v=e.target.value; setKeySound(v); setKeySoundStyle(v); }}
-            style={{background:'#222530',color:'var(--accent)',border:'1px solid var(--accent)',borderRadius:6,padding:'2px 4px',fontSize:11}}>
-            {KEY_SOUNDS.map(s=> <option key={s.id} value={s.id}>{s.label}</option>)}
-          </select>
-          <button type="button" style={{fontSize:10,padding:'2px 6px'}} onClick={()=> playKeyClick()} title="Test current key sound">Test</button>
-        </label>
-        <label style={{display:'flex',alignItems:'center',gap:4,fontSize:11}}>
-          Tone:
-          <select value={tone} onChange={e=>{ const v=e.target.value; setTone(v); setMorseToneStyle(v); if(isPlaying()){ stopMorse(); onPlay(); } }}
-            style={{background:'#222530',color:'var(--accent)',border:'1px solid var(--accent)',borderRadius:6,padding:'2px 4px',fontSize:11}}>
-            {MORSE_TONES.map(t=> <option key={t.id} value={t.id}>{t.label}</option>)}
-          </select>
-        </label>
-        <label style={{fontSize:11,display:'flex',alignItems:'center',gap:4,marginLeft:'auto'}}>WPM
-          <input type="range" min="5" max="30" value={wpm}
-            onChange={e=>{ const val=+e.target.value; setWpm(val); if(isPlaying()){ stopMorse(); onPlay(); } }} />
-        </label>
-        <label style={{fontSize:11,display:'flex',alignItems:'center',gap:4}}>Hz
-          <input type="range" min="300" max="900" value={freq}
-            onChange={e=>{ const val=+e.target.value; setFreq(val); if(isPlaying()){ stopMorse(); onPlay(); } }} />
-        </label>
-      </div>
-      <div className="output-block" aria-live="polite">
-        {analysis.direction==='morse' && analysis.continuous && (
-          <div style={{fontSize:'.55rem', opacity:.6, margin:'2px 0 6px'}}>
-            Hint: No spaces detected in Morse. Display is one block; add spaces or slashes to adjust segmentation.
-          </div>
-        )}
-        <div className="output-english">
-          {englishWords.map((w,i)=><span className="english-word" key={i}>{w}</span>)}
+      </section>
+
+      {/* CONTROLS (below output) */}
+      <section className="controls" style={{marginTop:14}}>
+        <div className="buttons-row" style={{display:'flex',flexWrap:'wrap',gap:8,marginBottom:8}}>
+          <button onClick={swap}>↔ Swap</button>
+          <button onClick={()=>{ setEditSide('input'); setOutputDraft(''); onClear(); }}>🧹 Clear</button>
+          <button onClick={onSave}>💾 Save</button>
         </div>
-        <div className="output-morse">
-          {morseWords.map((mw,i)=>{
-            const letters = analysis.continuous ? [mw] : mw.split(' ').filter(Boolean);
-            return (
-              <span key={i}>
-                <span className="morse-word">
-                  {letters.map((L,j)=>
-                    <span className="morse-letter" key={j}>{L}{(!analysis.continuous && j < letters.length-1) && ' '}</span>
-                  )}
-                </span>
-                {!analysis.continuous && i < morseWords.length-1 && <span className="morse-sep">/</span>}
-              </span>
-            );
-          })}
+
+        <div className="options-row" style={{display:'flex',flexWrap:'wrap',gap:12,alignItems:'center'}}>
+          <label>Key:{' '}
+            <select value={keySound} onChange={e=>{ const v=e.target.value; setKeySound(v); setKeySoundStyle(v); previewKeyClick(v); }}>
+              {KEY_SOUNDS.map(s=> (
+                <option key={s.id} value={s.id} onMouseEnter={()=> previewKeyClick(s.id)} title="Hover to preview">
+                  {s.label}
+                </option>
+              ))}
+            </select>
+          </label>
+
+          <label>Hz <input type="range" min="300" max="900" value={freq ?? 600} onChange={e=> setFreq?.(+e.target.value)} /></label>
+          <label>WPM <input type="range" min="5" max="30" value={wpm ?? 15} onChange={e=> setWpm?.(+e.target.value)} /></label>
+          <label>Tone:{' '}
+            <select value={tone} onChange={e=>{ const v=e.target.value; setTone(v); setMorseToneStyle(v); }}>
+              {MORSE_TONES.map(t=> (
+                <option key={t.id} value={t.id}>{t.label}</option>
+              ))}
+            </select>
+          </label>
         </div>
-      </div>
-    </section>
+      </section>
+
+    </main>
   );
 }
